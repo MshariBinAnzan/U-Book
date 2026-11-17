@@ -80,3 +80,12 @@ python app.py
 
 Open **http://127.0.0.1:5000** in your browser.
 
+---
+
+## Contributors
+
+- **MshariBinAnzan** ([@MshariBinAnzan](https://github.com/MshariBinAnzan))
+- **MoBinTalib** ([@MoBinTalib](https://github.com/MoBinTalib))
+- **SultanAbuthnain** ([@SultanAbuthnain](https://github.com/SultanAbuthnain))
+
+
