@@ -1,0 +1,313 @@
+{% extends "base.html" %}
+{% block title %}{{ t.admin_heading }} — {{ t.app_name }}{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h4 class="fw-semibold mb-0">{{ t.admin_heading }}</h4>
+    <button class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#addRoomModal">
+        {{ t.btn_add_room }}
+    </button>
+</div>
+
+<!-- Tabs -->
+<ul class="nav nav-tabs mb-3" id="adminTabs" role="tablist">
+    <li class="nav-item" role="presentation">
+        <button class="nav-link active" id="bookings-tab" data-bs-toggle="tab" data-bs-target="#bookings-pane" type="button" role="tab">
+            {{ t.tab_bookings }} ({{ bookings|length }})
+        </button>
+    </li>
+    <li class="nav-item" role="presentation">
+        <button class="nav-link" id="rooms-tab" data-bs-toggle="tab" data-bs-target="#rooms-pane" type="button" role="tab">
+            {{ t.tab_rooms }} ({{ rooms|length }})
+        </button>
+    </li>
+    <li class="nav-item" role="presentation">
+        <button class="nav-link" id="users-tab" data-bs-toggle="tab" data-bs-target="#users-pane" type="button" role="tab">
+            {{ t.tab_users }} ({{ profiles|length }})
+        </button>
+    </li>
+</ul>
+
+<div class="tab-content">
+    <!-- TAB 1: All Reservations -->
+    <div class="tab-pane fade show active" id="bookings-pane" role="tabpanel">
+        <div class="panel">
+            {% if bookings %}
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead>
+                        <tr>
+                            <th>{{ t.col_room_name }}</th>
+                            <th>{{ t.col_requester }}</th>
+                            <th>{{ t.col_date_time }}</th>
+                            <th>{{ t.col_purpose }}</th>
+                            <th>{{ t.col_status }}</th>
+                            <th class="text-end">{{ t.col_action }}</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for b in bookings %}
+                        <tr>
+                            <td>
+                                <div class="fw-semibold">{{ (b.rooms or {}).get('display_name', '') }}</div>
+                                <div class="small text-muted">{{ (b.rooms or {}).get('display_building', '') }}</div>
+                            </td>
+                            <td>
+                                <div>{{ (b.profiles or {}).get('full_name', '') }}</div>
+                                <div class="small text-muted">
+                                    {{ (b.profiles or {}).get('department', '') }}
+                                    ({{ role_labels.get((b.profiles or {}).get('role', 'doctor'), '') }})
+                                </div>
+                            </td>
+                            <td>
+                                <div>{{ b.booking_date }}</div>
+                                <div class="small text-muted">{{ b.start_time|time12 }} – {{ b.end_time|time12 }}</div>
+                            </td>
+                            <td>{{ b.purpose }}</td>
+                            <td>
+                                {% if b.status == 'confirmed' %}
+                                    <span class="status-tag status-tag-confirmed">{{ t.status_confirmed }}</span>
+                                {% elif b.status == 'pending' %}
+                                    <span class="status-tag">{{ t.status_pending }}</span>
+                                {% else %}
+                                    <span class="status-tag status-tag-cancelled">{{ t.status_cancelled }}</span>
+                                {% endif %}
+                            </td>
+                            <td class="text-end">
+                                <div class="d-inline-flex gap-1">
+                                    {% if b.status != 'confirmed' %}
+                                    <form method="POST" action="{{ url_for('admin_update_booking_status', booking_id=b.id) }}">
+                                        <input type="hidden" name="status" value="confirmed">
+                                        <button type="submit" class="btn btn-outline-success btn-sm">{{ t.btn_approve }}</button>
+                                    </form>
+                                    {% endif %}
+                                    {% if b.status != 'cancelled' %}
+                                    <form method="POST" action="{{ url_for('admin_update_booking_status', booking_id=b.id) }}">
+                                        <input type="hidden" name="status" value="cancelled">
+                                        <button type="submit" class="btn btn-outline-danger btn-sm">{{ t.btn_cancel }}</button>
+                                    </form>
+                                    {% endif %}
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <div class="p-4 text-muted small">{{ t.no_past_bookings }}</div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- TAB 2: Meeting Rooms Inventory -->
+    <div class="tab-pane fade" id="rooms-pane" role="tabpanel">
+        <div class="panel">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead>
+                        <tr>
+                            <th>{{ t.col_room_name }}</th>
+                            <th>{{ t.col_building_floor }}</th>
+                            <th>{{ t.col_capacity }}</th>
+                            <th>{{ t.col_equipment }}</th>
+                            <th>{{ t.col_status }}</th>
+                            <th class="text-end">{{ t.col_action }}</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for room in rooms %}
+                        <tr>
+                            <td>
+                                <div class="fw-semibold">{{ room.display_name }}</div>
+                                <div class="small text-muted">{{ room.name_en }} / {{ room.name_ar }}</div>
+                            </td>
+                            <td>
+                                <div>{{ room.display_building }}</div>
+                                <div class="small text-muted">{{ t.floor_label }} {{ room.floor }}</div>
+                            </td>
+                            <td>{{ room.capacity }} {{ t.seats_label }}</td>
+                            <td class="small text-muted">{{ room.display_equipment or '—' }}</td>
+                            <td>
+                                {% if room.is_active %}
+                                    <span class="status-tag status-tag-confirmed">{{ t.status_active }}</span>
+                                {% else %}
+                                    <span class="status-tag">{{ t.status_inactive }}</span>
+                                {% endif %}
+                            </td>
+                            <td class="text-end">
+                                <div class="d-inline-flex gap-1">
+                                    <button class="btn btn-outline-secondary btn-sm" data-bs-toggle="modal" data-bs-target="#editRoomModal-{{ room.id }}">
+                                        {{ t.btn_edit }}
+                                    </button>
+                                    <form method="POST" action="{{ url_for('admin_toggle_room', room_id=room.id) }}">
+                                        <button type="submit" class="btn btn-outline-secondary btn-sm">
+                                            {{ t.btn_deactivate if room.is_active else t.btn_activate }}
+                                        </button>
+                                    </form>
+                                </div>
+                            </td>
+                        </tr>
+
+                        <!-- Edit Meeting Room Modal -->
+                        <div class="modal fade" id="editRoomModal-{{ room.id }}" tabindex="-1" aria-hidden="true">
+                            <div class="modal-dialog">
+                                <div class="modal-content">
+                                    <form method="POST" action="{{ url_for('admin_edit_room', room_id=room.id) }}">
+                                        <div class="modal-header">
+                                            <h6 class="modal-title fw-semibold">{{ t.btn_edit }} — {{ room.display_name }}</h6>
+                                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                        </div>
+                                        <div class="modal-body">
+                                            <div class="row g-2 mb-2">
+                                                <div class="col-md-6">
+                                                    <label class="form-label small fw-medium">{{ t.label_name_en }}</label>
+                                                    <input type="text" name="name_en" class="form-control form-control-sm" value="{{ room.name_en }}" required>
+                                                </div>
+                                                <div class="col-md-6">
+                                                    <label class="form-label small fw-medium">{{ t.label_name_ar }}</label>
+                                                    <input type="text" name="name_ar" class="form-control form-control-sm" value="{{ room.name_ar }}" required>
+                                                </div>
+                                            </div>
+                                            <div class="row g-2 mb-2">
+                                                <div class="col-md-6">
+                                                    <label class="form-label small fw-medium">{{ t.label_building_en }}</label>
+                                                    <input type="text" name="building_en" class="form-control form-control-sm" value="{{ room.building_en }}" required>
+                                                </div>
+                                                <div class="col-md-6">
+                                                    <label class="form-label small fw-medium">{{ t.label_building_ar }}</label>
+                                                    <input type="text" name="building_ar" class="form-control form-control-sm" value="{{ room.building_ar }}" required>
+                                                </div>
+                                            </div>
+                                            <div class="row g-2 mb-2">
+                                                <div class="col-6">
+                                                    <label class="form-label small fw-medium">{{ t.floor_label }}</label>
+                                                    <input type="number" name="floor" class="form-control form-control-sm" value="{{ room.floor }}" required>
+                                                </div>
+                                                <div class="col-6">
+                                                    <label class="form-label small fw-medium">{{ t.col_capacity }}</label>
+                                                    <input type="number" name="capacity" class="form-control form-control-sm" min="1" value="{{ room.capacity }}" required>
+                                                </div>
+                                            </div>
+                                            <div class="mb-2">
+                                                <label class="form-label small fw-medium">{{ t.label_equipment_en }}</label>
+                                                <input type="text" name="equipment_en" class="form-control form-control-sm" value="{{ room.equipment_en }}">
+                                            </div>
+                                            <div class="mb-2">
+                                                <label class="form-label small fw-medium">{{ t.label_equipment_ar }}</label>
+                                                <input type="text" name="equipment_ar" class="form-control form-control-sm" value="{{ room.equipment_ar }}">
+                                            </div>
+                                        </div>
+                                        <div class="modal-footer">
+                                            <button type="button" class="btn btn-outline-secondary btn-sm" data-bs-dismiss="modal">{{ t.btn_close }}</button>
+                                            <button type="submit" class="btn btn-primary btn-sm">{{ t.btn_save }}</button>
+                                        </div>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- TAB 3: Users & Roles -->
+    <div class="tab-pane fade" id="users-pane" role="tabpanel">
+        <div class="panel">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead>
+                        <tr>
+                            <th>{{ t.label_full_name }}</th>
+                            <th>{{ t.label_email }}</th>
+                            <th>{{ t.label_department }}</th>
+                            <th>{{ t.label_role }}</th>
+                            <th class="text-end">{{ t.col_action }}</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for p in profiles %}
+                        <tr>
+                            <td class="fw-semibold">{{ p.full_name }}</td>
+                            <td>{{ p.email }}</td>
+                            <td>{{ p.department }}</td>
+                            <td><span class="status-tag">{{ role_labels.get(p.role, p.role) }}</span></td>
+                            <td class="text-end">
+                                <form method="POST" action="{{ url_for('admin_update_user_role', user_id=p.id) }}" class="d-inline-flex align-items-center gap-2">
+                                    <select name="role" class="form-select form-select-sm" style="width: 150px;">
+                                        <option value="doctor" {% if p.role == 'doctor' %}selected{% endif %}>{{ t.role_doctor }}</option>
+                                        <option value="staff" {% if p.role == 'staff' %}selected{% endif %}>{{ t.role_staff }}</option>
+                                        <option value="admin" {% if p.role == 'admin' %}selected{% endif %}>{{ t.role_admin }}</option>
+                                    </select>
+                                    <button type="submit" class="btn btn-outline-primary btn-sm">{{ t.btn_update_role }}</button>
+                                </form>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Add Meeting Room Modal -->
+<div class="modal fade" id="addRoomModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form method="POST" action="{{ url_for('admin_create_room') }}">
+                <div class="modal-header">
+                    <h6 class="modal-title fw-semibold">{{ t.btn_add_room }}</h6>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="row g-2 mb-2">
+                        <div class="col-md-6">
+                            <label class="form-label small fw-medium">{{ t.label_name_en }}</label>
+                            <input type="text" name="name_en" class="form-control form-control-sm" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label small fw-medium">{{ t.label_name_ar }}</label>
+                            <input type="text" name="name_ar" class="form-control form-control-sm" required>
+                        </div>
+                    </div>
+                    <div class="row g-2 mb-2">
+                        <div class="col-md-6">
+                            <label class="form-label small fw-medium">{{ t.label_building_en }}</label>
+                            <input type="text" name="building_en" class="form-control form-control-sm" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label small fw-medium">{{ t.label_building_ar }}</label>
+                            <input type="text" name="building_ar" class="form-control form-control-sm" required>
+                        </div>
+                    </div>
+                    <div class="row g-2 mb-2">
+                        <div class="col-6">
+                            <label class="form-label small fw-medium">{{ t.floor_label }}</label>
+                            <input type="number" name="floor" class="form-control form-control-sm" value="1" required>
+                        </div>
+                        <div class="col-6">
+                            <label class="form-label small fw-medium">{{ t.col_capacity }}</label>
+                            <input type="number" name="capacity" class="form-control form-control-sm" min="1" value="12" required>
+                        </div>
+                    </div>
+                    <div class="mb-2">
+                        <label class="form-label small fw-medium">{{ t.label_equipment_en }}</label>
+                        <input type="text" name="equipment_en" class="form-control form-control-sm">
+                    </div>
+                    <div class="mb-2">
+                        <label class="form-label small fw-medium">{{ t.label_equipment_ar }}</label>
+                        <input type="text" name="equipment_ar" class="form-control form-control-sm">
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary btn-sm" data-bs-dismiss="modal">{{ t.btn_close }}</button>
+                    <button type="submit" class="btn btn-primary btn-sm">{{ t.btn_save }}</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

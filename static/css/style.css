@@ -1,0 +1,141 @@
+/* ==========================================================================
+   U-Book: University Meeting Room Booking System — Institutional Stylesheet
+   ========================================================================== */
+
+:root {
+    --ubook-navy: #1B365D;
+    --ubook-navy-hover: #142847;
+    --ubook-bg: #F8F9FA;
+    --ubook-surface: #FFFFFF;
+    --ubook-border: #DEE2E6;
+    --ubook-text: #212529;
+    --ubook-muted: #6C757D;
+}
+
+body {
+    background-color: var(--ubook-bg);
+    color: var(--ubook-text);
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    font-size: 0.9375rem;
+}
+
+html[dir="rtl"] body {
+    font-family: 'IBM Plex Sans Arabic', 'Inter', sans-serif;
+}
+
+/* Top Navbar */
+.navbar-ubook {
+    background-color: var(--ubook-navy);
+    border-bottom: 1px solid #122440;
+}
+
+.navbar-ubook .navbar-brand {
+    color: #FFFFFF;
+    font-weight: 600;
+    letter-spacing: -0.01em;
+}
+
+.navbar-ubook .nav-link {
+    color: rgba(255, 255, 255, 0.82);
+    font-size: 0.9rem;
+    padding: 0.4rem 0.75rem;
+}
+
+.navbar-ubook .nav-link:hover,
+.navbar-ubook .nav-link.active {
+    color: #FFFFFF;
+}
+
+/* Primary Buttons & Controls */
+.btn-primary {
+    background-color: var(--ubook-navy);
+    border-color: var(--ubook-navy);
+}
+
+.btn-primary:hover,
+.btn-primary:focus,
+.btn-primary:active {
+    background-color: var(--ubook-navy-hover) !important;
+    border-color: var(--ubook-navy-hover) !important;
+}
+
+.btn-outline-primary {
+    color: var(--ubook-navy);
+    border-color: var(--ubook-navy);
+}
+
+.btn-outline-primary:hover,
+.btn-outline-primary:focus {
+    background-color: var(--ubook-navy);
+    border-color: var(--ubook-navy);
+    color: #FFFFFF;
+}
+
+/* Flat Institutional Panels & Tables */
+.panel {
+    background-color: var(--ubook-surface);
+    border: 1px solid var(--ubook-border);
+    border-radius: 4px;
+}
+
+.panel-header {
+    background-color: var(--ubook-surface);
+    border-bottom: 1px solid var(--ubook-border);
+    padding: 0.875rem 1.25rem;
+}
+
+.table > :not(caption) > * > * {
+    padding: 0.75rem 1rem;
+    border-bottom-color: var(--ubook-border);
+}
+
+.table thead th {
+    background-color: #F1F3F5;
+    color: #495057;
+    font-weight: 600;
+    font-size: 0.8125rem;
+    border-bottom: 1px solid var(--ubook-border);
+}
+
+/* Simple Status Text / Subtle Tag */
+.status-tag {
+    display: inline-block;
+    font-size: 0.78rem;
+    font-weight: 500;
+    padding: 0.15rem 0.5rem;
+    border-radius: 3px;
+    border: 1px solid var(--ubook-border);
+    background-color: #F8F9FA;
+    color: #343A40;
+}
+
+.status-tag-confirmed {
+    border-color: #B2DFDB;
+    background-color: #E8F5E9;
+    color: #1B5E20;
+}
+
+.status-tag-cancelled {
+    border-color: #F5C6CB;
+    background-color: #F8D7DA;
+    color: #721C24;
+}
+
+.nav-tabs .nav-link {
+    color: var(--ubook-muted);
+    font-weight: 500;
+}
+
+.nav-tabs .nav-link.active {
+    color: var(--ubook-navy);
+    font-weight: 600;
+}
+
+footer {
+    margin-top: auto;
+    background-color: var(--ubook-surface);
+    border-top: 1px solid var(--ubook-border);
+}

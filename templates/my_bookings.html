@@ -1,0 +1,110 @@
+{% extends "base.html" %}
+{% block title %}{{ t.my_bookings_title }} — {{ t.app_name }}{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h4 class="fw-semibold mb-0">{{ t.my_bookings_title }}</h4>
+    <a href="{{ url_for('index') }}" class="btn btn-primary btn-sm">{{ t.nav_rooms }}</a>
+</div>
+
+<!-- Upcoming Reservations -->
+<div class="panel mb-4">
+    <div class="panel-header">
+        <span class="fw-semibold">{{ t.upcoming_bookings_heading }} ({{ upcoming_bookings|length }})</span>
+    </div>
+
+    {% if upcoming_bookings %}
+    <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0">
+            <thead>
+                <tr>
+                    <th>{{ t.col_room_name }}</th>
+                    <th>{{ t.col_building_floor }}</th>
+                    <th>{{ t.col_date_time }}</th>
+                    <th>{{ t.col_purpose }}</th>
+                    <th>{{ t.col_status }}</th>
+                    <th class="text-end">{{ t.col_action }}</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for b in upcoming_bookings %}
+                <tr>
+                    <td class="fw-semibold">{{ (b.rooms or {}).get('display_name', '') }}</td>
+                    <td class="text-muted small">
+                        {{ (b.rooms or {}).get('display_building', '') }}
+                        ({{ t.floor_label }} {{ (b.rooms or {}).get('floor', 1) }})
+                    </td>
+                    <td>
+                        <div>{{ b.booking_date }}</div>
+                        <div class="small text-muted">{{ b.start_time|time12 }} – {{ b.end_time|time12 }}</div>
+                    </td>
+                    <td>{{ b.purpose }}</td>
+                    <td>
+                        <span class="status-tag status-tag-confirmed">
+                            {{ t.status_confirmed if b.status == 'confirmed' else t.status_pending }}
+                        </span>
+                    </td>
+                    <td class="text-end">
+                        <form method="POST" action="{{ url_for('cancel_booking', booking_id=b.id) }}" class="d-inline" onsubmit="return confirm('{{ t.confirm_cancel_prompt }}');">
+                            <button type="submit" class="btn btn-outline-danger btn-sm">{{ t.btn_cancel }}</button>
+                        </form>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <div class="p-4 text-muted small">
+        {{ t.no_upcoming_bookings }}
+    </div>
+    {% endif %}
+</div>
+
+<!-- Past & Cancelled Reservations -->
+<div class="panel">
+    <div class="panel-header">
+        <span class="fw-semibold text-secondary">{{ t.past_bookings_heading }} ({{ past_bookings|length }})</span>
+    </div>
+
+    {% if past_bookings %}
+    <div class="table-responsive">
+        <table class="table align-middle mb-0">
+            <thead>
+                <tr>
+                    <th>{{ t.col_room_name }}</th>
+                    <th>{{ t.col_building_floor }}</th>
+                    <th>{{ t.col_date_time }}</th>
+                    <th>{{ t.col_purpose }}</th>
+                    <th>{{ t.col_status }}</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for b in past_bookings %}
+                <tr class="text-muted">
+                    <td>{{ (b.rooms or {}).get('display_name', '') }}</td>
+                    <td class="small">{{ (b.rooms or {}).get('display_building', '') }}</td>
+                    <td>
+                        <div>{{ b.booking_date }}</div>
+                        <div class="small">{{ b.start_time|time12 }} – {{ b.end_time|time12 }}</div>
+                    </td>
+                    <td>{{ b.purpose }}</td>
+                    <td>
+                        {% if b.status == 'cancelled' %}
+                            <span class="status-tag status-tag-cancelled">{{ t.status_cancelled }}</span>
+                        {% else %}
+                            <span class="status-tag">{{ t.status_completed }}</span>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <div class="p-4 text-muted small">
+        {{ t.no_past_bookings }}
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

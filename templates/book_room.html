@@ -1,0 +1,151 @@
+{% extends "base.html" %}
+{% block title %}{{ room.display_name }} — {{ t.app_name }}{% endblock %}
+
+{% block content %}
+<div class="mb-3">
+    <a href="{{ url_for('index', booking_date=selected_date) }}" class="text-decoration-none small text-secondary">
+        &larr; {{ t.back_to_rooms }}
+    </a>
+</div>
+
+<div class="row g-4">
+    <!-- Left Column: Room Specifications & Date Schedule -->
+    <div class="col-lg-7">
+        <div class="panel mb-4">
+            <div class="panel-header">
+                <h5 class="fw-semibold mb-0">{{ room.display_name }}</h5>
+            </div>
+            <div class="p-3">
+                <table class="table table-sm mb-0">
+                    <tbody>
+                        <tr>
+                            <th class="text-muted fw-normal" style="width: 35%;">{{ t.col_building_floor }}</th>
+                            <td>{{ room.display_building }} ({{ t.floor_label }} {{ room.floor }})</td>
+                        </tr>
+                        <tr>
+                            <th class="text-muted fw-normal">{{ t.col_capacity }}</th>
+                            <td>{{ room.capacity }} {{ t.seats_label }}</td>
+                        </tr>
+                        <tr>
+                            <th class="text-muted fw-normal">{{ t.col_equipment }}</th>
+                            <td>{{ room.display_equipment or '—' }}</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <div class="panel">
+            <div class="panel-header d-flex flex-wrap justify-content-between align-items-center gap-2">
+                <span class="fw-semibold">{{ t.schedule_for_date }} {{ selected_date }}</span>
+                <form method="GET" action="{{ url_for('book_room', room_id=room.id) }}" class="d-flex align-items-center gap-2">
+                    <input type="date" name="booking_date" class="form-control form-control-sm" value="{{ selected_date }}" onchange="this.form.submit()">
+                    <button type="submit" class="btn btn-outline-secondary btn-sm">{{ t.btn_view_date }}</button>
+                </form>
+            </div>
+
+            {% if day_bookings %}
+            <div class="table-responsive">
+                <table class="table align-middle mb-0">
+                    <thead>
+                        <tr>
+                            <th>{{ t.col_date_time }}</th>
+                            <th>{{ t.col_purpose }}</th>
+                            <th>{{ t.reserved_by }}</th>
+                            <th>{{ t.col_status }}</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for b in day_bookings %}
+                        <tr>
+                            <td class="fw-medium">{{ b.start_time|time12 }} – {{ b.end_time|time12 }}</td>
+                            <td>{{ b.purpose }}</td>
+                            <td class="small text-muted">
+                                {{ (b.profiles or {}).get('full_name', '') }}
+                                {% if (b.profiles or {}).get('department') %}
+                                    ({{ b.profiles.department }})
+                                {% endif %}
+                            </td>
+                            <td>
+                                <span class="status-tag status-tag-confirmed">
+                                    {{ t.status_confirmed if b.status == 'confirmed' else t.status_pending }}
+                                </span>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <div class="p-4 text-muted small">
+                {{ t.no_bookings_on_date }}
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Right Column: Reservation Form -->
+    <div class="col-lg-5">
+        <div class="panel">
+            <div class="panel-header">
+                <h5 class="fw-semibold mb-0">{{ t.new_reservation_heading }}</h5>
+            </div>
+            <div class="p-3">
+                <form method="POST" action="{{ url_for('book_room', room_id=room.id) }}">
+                    <div class="mb-3">
+                        <label for="booking_date" class="form-label small fw-medium">{{ t.label_booking_date }}</label>
+                        <input
+                            type="date"
+                            class="form-control form-control-sm"
+                            id="booking_date"
+                            name="booking_date"
+                            min="{{ today_iso }}"
+                            value="{{ selected_date }}"
+                            required
+                            onchange="window.location.href='{{ url_for('book_room', room_id=room.id) }}?booking_date=' + this.value"
+                        >
+                    </div>
+
+                    <div class="row g-3 mb-3">
+                        <div class="col-6">
+                            <label for="start_time" class="form-label small fw-medium">{{ t.label_start_time }}</label>
+                            <input type="time" class="form-control form-control-sm" id="start_time" name="start_time" value="09:00" required>
+                        </div>
+                        <div class="col-6">
+                            <label for="end_time" class="form-label small fw-medium">{{ t.label_end_time }}</label>
+                            <input type="time" class="form-control form-control-sm" id="end_time" name="end_time" value="10:00" required>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="purpose" class="form-label small fw-medium">{{ t.label_purpose }}</label>
+                        <textarea
+                            class="form-control form-control-sm"
+                            id="purpose"
+                            name="purpose"
+                            rows="3"
+                            placeholder="{{ t.placeholder_purpose }}"
+                            required
+                        ></textarea>
+                    </div>
+
+                    <div class="border rounded p-2 px-3 bg-light small mb-3">
+                        <div class="d-flex justify-content-between">
+                            <span class="text-muted">{{ t.label_booking_holder }}:</span>
+                            <span class="fw-medium">{{ current_user.full_name }} ({{ role_labels.get(current_user.role, current_user.role) }})</span>
+                        </div>
+                        <div class="d-flex justify-content-between mt-1">
+                            <span class="text-muted">{{ t.label_department }}:</span>
+                            <span>{{ current_user.department }}</span>
+                        </div>
+                    </div>
+
+                    <button type="submit" class="btn btn-primary btn-sm w-100 py-2 fw-medium">
+                        {{ t.btn_confirm_booking }}
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

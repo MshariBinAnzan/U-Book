@@ -1,0 +1,92 @@
+{% extends "base.html" %}
+{% block title %}{{ t.page_rooms_title }} — {{ t.app_name }}{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h4 class="fw-semibold mb-0">{{ t.page_rooms_title }}</h4>
+</div>
+
+<!-- Filter Bar (Building, Minimum Capacity, Date) -->
+<div class="panel p-3 mb-4">
+    <form method="GET" action="{{ url_for('index') }}" class="row g-3 align-items-end">
+        <div class="col-md-4">
+            <label class="form-label small fw-medium mb-1">{{ t.filter_building }}</label>
+            <select name="building" class="form-select form-select-sm">
+                <option value="">{{ t.filter_all_buildings }}</option>
+                {% for b in buildings %}
+                    <option value="{{ b }}" {% if filters.building == b %}selected{% endif %}>{{ b }}</option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <div class="col-md-3">
+            <label class="form-label small fw-medium mb-1">{{ t.filter_min_capacity }}</label>
+            <input type="number" name="min_capacity" class="form-control form-control-sm" min="1" value="{{ filters.min_capacity }}">
+        </div>
+
+        <div class="col-md-3">
+            <label class="form-label small fw-medium mb-1">{{ t.filter_date }}</label>
+            <input type="date" name="booking_date" class="form-control form-control-sm" value="{{ filters.booking_date }}">
+        </div>
+
+        <div class="col-md-2 d-flex gap-2">
+            <button type="submit" class="btn btn-primary btn-sm w-100">{{ t.btn_filter }}</button>
+            <a href="{{ url_for('index') }}" class="btn btn-outline-secondary btn-sm">{{ t.btn_reset }}</a>
+        </div>
+    </form>
+</div>
+
+<!-- Meeting Rooms Table -->
+<div class="panel">
+    {% if rooms %}
+    <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0">
+            <thead>
+                <tr>
+                    <th>{{ t.col_room_name }}</th>
+                    <th>{{ t.col_building_floor }}</th>
+                    <th>{{ t.col_capacity }}</th>
+                    <th>{{ t.col_equipment }}</th>
+                    <th>{{ t.col_availability }} ({{ filters.booking_date }})</th>
+                    <th class="text-end">{{ t.col_action }}</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for room in rooms %}
+                <tr>
+                    <td class="fw-semibold">{{ room.display_name }}</td>
+                    <td>
+                        {{ room.display_building }}
+                        <span class="text-muted small">({{ t.floor_label }} {{ room.floor }})</span>
+                    </td>
+                    <td>{{ room.capacity }} {{ t.seats_label }}</td>
+                    <td class="text-muted small">{{ room.display_equipment or '—' }}</td>
+                    <td>
+                        {% if room.day_bookings %}
+                            <span class="status-tag">{{ room.day_bookings|length }} {{ t.status_reserved_slots }}</span>
+                            <div class="small text-muted mt-1">
+                                {% for b in room.day_bookings %}
+                                    <span class="me-2">{{ b.start_time|time12 }}–{{ b.end_time|time12 }}</span>
+                                {% endfor %}
+                            </div>
+                        {% else %}
+                            <span class="status-tag status-tag-confirmed">{{ t.status_available_day }}</span>
+                        {% endif %}
+                    </td>
+                    <td class="text-end">
+                        <a href="{{ url_for('book_room', room_id=room.id, booking_date=filters.booking_date) }}" class="btn btn-primary btn-sm px-3">
+                            {{ t.btn_book }}
+                        </a>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <div class="p-4 text-center text-muted small">
+        {{ t.no_rooms_found }}
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

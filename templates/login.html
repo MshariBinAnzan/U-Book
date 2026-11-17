@@ -1,0 +1,48 @@
+{% extends "base.html" %}
+{% block title %}{{ t.login_heading }} — {{ t.app_name }}{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center my-4">
+    <div class="col-md-6 col-lg-4">
+        <div class="panel">
+            <div class="panel-header">
+                <h5 class="fw-semibold mb-0">{{ t.login_heading }}</h5>
+            </div>
+
+            <div class="p-4">
+                <p class="text-muted small mb-3">{{ t.login_notice }}</p>
+
+                <form method="POST" action="{{ url_for('login', next=request.args.get('next')) }}">
+                    <div class="mb-3">
+                        <label for="email" class="form-label small fw-medium">{{ t.label_email }}</label>
+                        <input type="email" class="form-control form-control-sm" id="email" name="email" required autofocus>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="password" class="form-label small fw-medium">{{ t.label_password }}</label>
+                        <input type="password" class="form-control form-control-sm" id="password" name="password" required>
+                    </div>
+
+                    <button type="submit" class="btn btn-primary btn-sm w-100 py-2 fw-medium">
+                        {{ t.btn_login_submit }}
+                    </button>
+                </form>
+
+                {% if quick_login_enabled %}
+                <form method="POST" action="{{ url_for('quick_login') }}" class="mt-2">
+                    <button type="submit" class="btn btn-outline-secondary btn-sm w-100 py-2">
+                        {{ t.btn_quick_login }}
+                    </button>
+                </form>
+                {% endif %}
+
+                <hr class="my-3">
+                <div class="text-center small text-muted">
+                    {{ t.no_account_prompt }}
+                    <a href="{{ url_for('register') }}" class="text-decoration-none">{{ t.nav_register }}</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
